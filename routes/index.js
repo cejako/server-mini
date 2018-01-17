@@ -2,6 +2,8 @@ const router = require('koa-router')();
 const request = require('superagent');
 const superagent = require('superagent-charset')(request);
 const urlencode = require('urlencode');
+const access = require('../core/access');
+const customService = require('../core/custom_service');
 const parser = require('../core/parser');
 
 router.get('/', async(ctx, next) => {
@@ -23,4 +25,35 @@ router.get('/cgi', async(ctx, next) => {
   ctx.body = parser(res.text);
 });
 
-module.exports = router
+// 获取access_token
+router.get('/access', async(ctx, next) => {
+    ctx.body = await access.getAccessToken();
+});
+
+// 处理微信小程序服务器消息
+router.get('/handle', async(ctx, next) => {
+  const {
+    ToUserName,
+    FromUserName,
+    CreateTime,
+    MsgType,
+    Event,
+    SessionFrom
+  } = ctx.body;
+
+  // 处理进入客服会话事件
+  if (MsgType === 'event' && Event === 'user_enter_tempsession') {
+    // 发送客服消息
+    const msg = {
+      touser: FromUserName,
+      msgtype: 'text',
+      text: {
+        content: '文本内容....<a href="http://www.qq.com">点我试试</a>'
+      }
+    };
+
+    customService.sendMessage(msg);
+  }
+});
+
+module.exports = router;
