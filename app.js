@@ -4,17 +4,28 @@ const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
+const xmlParser = require('koa-xml-body')
 const logger = require('koa-logger')
 
 const index = require('./routes/index')
+const wx = require('./routes/wx')
 
 // error handler
 onerror(app)
 
 // middlewares
+app.use(xmlParser())
+// app.use(function(ctx, next) {
+//   // the parsed body will store in this.request.body
+//   // if nothing was parsed, body will be undefined
+//   ctx.body = ctx.request.body
+//   return next()
+// })
+
 app.use(bodyparser({
   enableTypes:['json', 'form', 'text']
 }))
+
 app.use(json())
 app.use(logger())
 app.use(require('koa-static')(__dirname + '/public'))
@@ -33,6 +44,7 @@ app.use(async (ctx, next) => {
 
 // routes
 app.use(index.routes(), index.allowedMethods())
+app.use(wx.routes(), wx.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
